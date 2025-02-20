@@ -1,13 +1,16 @@
 "use client";
 import { useState } from "react";
-import { signInWithGoogle, logOut } from "@/lib/firebase";
+import { signInWithGoogle, logOut, saveUserToFirestore } from "@/lib/firebase";
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
 
   const handleLogin = async () => {
     const loggedInUser = await signInWithGoogle();
-    setUser(loggedInUser);
+    if (loggedInUser) {
+      await saveUserToFirestore(loggedInUser); // Firestoreに保存
+      setUser(loggedInUser);
+    }
   };
 
   return (
