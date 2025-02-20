@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,7 +16,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
+export const db = getFirestore(app);
 
+// Googleログイン処理（関数をエクスポート）
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
@@ -26,11 +29,31 @@ export const signInWithGoogle = async () => {
   }
 };
 
+// ログアウト処理（関数をエクスポート）
 export const logOut = async () => {
   try {
     await signOut(auth);
     console.log("ログアウトしました");
   } catch (error) {
     console.error("ログアウトエラー:", error);
+  }
+};
+
+// Firestoreにユーザーを保存
+export const saveUserToFirestore = async (user: any) => {
+  if (!user) return;
+
+  const userRef = doc(db, "users", user.uid);
+  const userSnapshot = await getDoc(userRef);
+
+  if (!userSnapshot.exists()) {
+    await setDoc(userRef, {
+      uid: user.uid,
+      name: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+      createdAt: new Date(),
+      role: "user",
+    });
   }
 };
