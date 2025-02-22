@@ -1,33 +1,32 @@
 "use client";
-import { useState } from "react";
-import { signInWithGoogle, logOut, saveUserToFirestore } from "@/lib/firebase";
+import { useEffect, useState } from "react";
+import { auth, signInWithGoogle } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
+export default function LoginPage() {
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((loggedInUser) => {
+      if (loggedInUser) {
+        router.push("/home"); // ログイン済みなら /home へ移動
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const handleLogin = async () => {
-    const loggedInUser = await signInWithGoogle();
-    if (loggedInUser) {
-      await saveUserToFirestore(loggedInUser); // Firestoreに保存
-      setUser(loggedInUser);
-    }
+    await signInWithGoogle();
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-2xl font-bold">GameMatchingService</h1>
-      {user ? (
-        <>
-          <p>Welcome, {user.displayName}</p>
-          <button onClick={logOut} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">
-            Logout
-          </button>
-        </>
-      ) : (
-        <button onClick={handleLogin} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-          Login with Google
-        </button>
-      )}
+      <h1 className="text-2xl font-bold">Game Matching Service</h1>
+      <button onClick={handleLogin} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+        Login with Google
+      </button>
     </div>
   );
 }
