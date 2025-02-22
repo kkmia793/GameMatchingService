@@ -7,8 +7,10 @@ import {
   getDoc, 
   collection, 
   getDocs, 
+  addDoc, 
   query, 
-  orderBy 
+  orderBy, 
+  serverTimestamp 
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -62,7 +64,6 @@ export const saveUserToFirestore = async (user: any) => {
       email: user.email,
       photoURL: user.photoURL,
       createdAt: new Date(),
-      role: "user",
     });
   }
 };
@@ -70,7 +71,7 @@ export const saveUserToFirestore = async (user: any) => {
 // Firestoreから募集一覧を取得
 export const getGamePosts = async () => {
   try {
-    const gamesCollection = collection(db, "games");
+    const gamesCollection = collection(db, "games_posts");
     const q = query(gamesCollection, orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
 
@@ -83,5 +84,27 @@ export const getGamePosts = async () => {
   } catch (error) {
     console.error("募集一覧の取得に失敗:", error);
     return [];
+  }
+};
+
+// Firestoreにゲーム募集を保存
+export const createGamePost = async (title: string, gameName: string, user: any) => {
+  if (!user) return;
+
+  try {
+    await addDoc(collection(db, "games_posts"), {
+      title,
+      gameName,
+      host: {
+        uid: user.uid,
+        name: user.displayName,
+        photoURL: user.photoURL,
+      },
+      createdAt: serverTimestamp(),
+      players: [],
+      likes: 0,
+    });
+  } catch (error) {
+    console.error("ゲーム募集の作成に失敗:", error);
   }
 };
