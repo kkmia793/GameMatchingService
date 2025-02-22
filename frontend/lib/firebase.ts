@@ -1,6 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection, 
+  getDocs, 
+  query, 
+  orderBy 
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,7 +27,7 @@ export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
-// Googleログイン処理（関数をエクスポート）
+// Googleログイン処理
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
@@ -29,7 +38,7 @@ export const signInWithGoogle = async () => {
   }
 };
 
-// ログアウト処理（関数をエクスポート）
+// ログアウト処理
 export const logOut = async () => {
   try {
     await signOut(auth);
@@ -55,5 +64,24 @@ export const saveUserToFirestore = async (user: any) => {
       createdAt: new Date(),
       role: "user",
     });
+  }
+};
+
+// Firestoreから募集一覧を取得
+export const getGamePosts = async () => {
+  try {
+    const gamesCollection = collection(db, "games");
+    const q = query(gamesCollection, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+
+    const gamePosts = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    return gamePosts;
+  } catch (error) {
+    console.error("募集一覧の取得に失敗:", error);
+    return [];
   }
 };
